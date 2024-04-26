@@ -5,6 +5,7 @@
 #include <cmath>
 #include <random>
 #include <chrono>
+using namespace std;
 
 typedef std::size_t HASH_INDEX_T;
 
@@ -19,16 +20,43 @@ struct MyStringHash {
     // hash function entry point (i.e. this is h(k))
     HASH_INDEX_T operator()(const std::string& k) const
     {
-        // Add your code here
-
-
+    std::vector<std::size_t> char_values(k.length());
+    for (std::size_t i = 0; i < k.length(); i++) {
+        char_values[i] = letterDigitToNumber(k[i]);
     }
+
+    unsigned long long int base36_segments[5] = {0, 0, 0, 0, 0};
+    int char_index = k.length() - 1;  
+    int segment_index = 4;  
+    const unsigned long long pow36[6] = {
+        1, 36, 1296, 46656, 1679616, 60466176
+    };
+
+    while (char_index >= 0) {
+        unsigned long long int segment_value = 0;
+        for (int pos = 0; pos < 6 && char_index >= 0; pos++) {
+            segment_value += char_values[char_index--] * pow36[pos];
+        }
+        base36_segments[segment_index--] = segment_value;
+    }
+
+    unsigned long long int hash_value = rValues[0] * base36_segments[0];
+    for (int i = 1; i < 5; i++) {
+        hash_value += rValues[i] * base36_segments[i];
+    }
+    return hash_value;
+  }
 
     // A likely helper function is to convert a-z,0-9 to an integral value 0-35
     HASH_INDEX_T letterDigitToNumber(char letter) const
     {
-        // Add code here or delete this helper function if you do not want it
-
+      if (isdigit(letter)) {
+        return letter - '0' + 26; 
+    } 
+    else if (isalpha(letter)) {
+        return tolower(letter) - 'a';
+    }
+    return 0; 
     }
 
     // Code to generate the random R values
